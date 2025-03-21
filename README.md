@@ -2,11 +2,15 @@
 
 基于 Cloudflare Workers AI 构建的文档转换工具，能够将各种格式的文档高效转换为 Markdown 格式。
 
+![CleanShot 2025-03-21 at 22 50 26@2x](https://github.com/user-attachments/assets/4e01dbb2-9f22-46e5-8cf7-b180c91b3c1b)
+
 ⬇️ 这里一键部署
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/markdown-converter)
 
-刚需的朋友可以试试自己自建。
+👉 **[演示站点: markdown.jkaihub.com](https://markdown.jkaihub.com)**
+
+高频、感兴趣的朋友可以试试自建
 
 ## 功能特点
 
@@ -17,7 +21,7 @@
 - 💾 **一键下载**：转换结果可直接下载或复制
 - 🔎 **JSON 查看**：提供原始 JSON 数据查看功能
 - 🔒 **速率限制**：内置防滥用保护机制，确保服务稳定可靠
-- 🔐 **密码保护**：通过密码验证机制控制访问权限
+- 🔐 **密码保护**：通过密码验证机制控制访问权限，降低滥用风险和成本
 
 ## 支持的文档格式
 
