@@ -8,9 +8,8 @@
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/markdown-converter)
 
-👉 **[演示站点: markdown.jkaihub.com](https://markdown.jkaihub.com)**
 
-高频、感兴趣的朋友可以试试自建
+高频、感兴趣的朋友可以试试自建 ⬆️
 
 ## 功能特点
 
