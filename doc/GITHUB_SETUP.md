@@ -2,6 +2,8 @@
 
 本文档将指导您如何将此项目上传到 GitHub 并配置"一键部署"功能。
 
+> 官方演示站点: [markdown.jkaihub.com](https://markdown.jkaihub.com)
+
 ## 1. 创建 GitHub 仓库
 
 1. 访问 [GitHub](https://github.com) 并登录您的账户
