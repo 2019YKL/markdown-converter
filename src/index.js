@@ -7,15 +7,88 @@ const RATE_LIMIT = {
   ipCache: new Map()       // 存储IP及其请求次数
 };
 
+// 会话存储
+const SESSIONS = new Map();
+const SESSION_DURATION = 24 * 60 * 60 * 1000; // 会话有效期24小时
+
 export default {
   async fetch(request, env) {
     // 获取客户端IP
     const ip = request.headers.get('cf-connecting-ip') || 'unknown';
     const now = Date.now();
-    
-    // 实现速率限制
     const url = new URL(request.url);
+    
+    // 处理登录请求
+    if (url.pathname === '/verify-password' && request.method === 'POST') {
+      try {
+        const { password } = await request.json();
+        const correctPassword = env.APP_PASSWORD || 'admin123'; // 默认密码，应该在Cloudflare设置环境变量
+        
+        if (password === correctPassword) {
+          // 创建会话令牌
+          const sessionToken = crypto.randomUUID();
+          SESSIONS.set(sessionToken, {
+            ip,
+            expires: now + SESSION_DURATION
+          });
+          
+          return new Response(JSON.stringify({ success: true, token: sessionToken }), {
+            headers: { 'Content-Type': 'application/json' }
+          });
+        } else {
+          return new Response(JSON.stringify({ success: false, error: '密码不正确' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      } catch (error) {
+        return new Response(JSON.stringify({ success: false, error: '请求格式错误' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    }
+    
+    // 验证会话
+    const validateSession = () => {
+      const sessionToken = url.searchParams.get('token') || 
+                          request.headers.get('X-Session-Token');
+                          
+      if (!sessionToken) return false;
+      
+      const session = SESSIONS.get(sessionToken);
+      if (!session) return false;
+      
+      if (now > session.expires) {
+        SESSIONS.delete(sessionToken);
+        return false;
+      }
+      
+      // 刷新会话
+      session.expires = now + SESSION_DURATION;
+      SESSIONS.set(sessionToken, session);
+      
+      return true;
+    };
+    
+    // 首页 - 返回 HTML 界面
+    if (url.pathname === '/' || url.pathname === '') {
+      return new Response(HTML_CONTENT, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+      });
+    }
+    
+    // 实现速率限制和会话验证
     if (url.pathname === '/convert') {
+      // 先验证会话
+      if (!validateSession()) {
+        return new Response(JSON.stringify({ error: '未授权访问，请先登录' }), { 
+          status: 401,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // 然后检查速率限制
       let clientData = RATE_LIMIT.ipCache.get(ip) || { count: 0, resetTime: now + RATE_LIMIT.windowMs };
       
       // 重置过期的计数器
@@ -41,15 +114,6 @@ export default {
           }
         });
       }
-    }
-    
-    // 处理不同的请求路径
-    
-    // 首页 - 返回 HTML 界面
-    if (url.pathname === '/' || url.pathname === '') {
-      return new Response(HTML_CONTENT, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' }
-      });
     }
     
     // API 端点 - 处理文件转换
@@ -131,51 +195,64 @@ const HTML_CONTENT = `<!DOCTYPE html>
             <p class="text-gray-600 max-w-2xl mx-auto mb-5">将各种格式的文档转换为 Markdown 格式，支持 PDF、图片、Office 文档等多种格式</p>
         </header>
         
-        <div class="bg-white rounded-lg shadow-md p-6 mb-5">
-            <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-md p-10 text-center cursor-pointer transition-all hover:border-primary hover:bg-primary/5 mb-5">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-16 h-16 fill-primary mx-auto mb-4">
-                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
-                </svg>
-                <h3 class="text-xl font-medium mb-2">上传文件</h3>
-                <p class="text-gray-600 mb-4">点击上传或拖拽文件到这里</p>
-                <button id="selectFiles" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">选择文件</button>
-                <input type="file" id="fileInput" multiple class="hidden">
+        <!-- 登录表单 -->
+        <div id="loginForm" class="bg-white rounded-lg shadow-md p-6 mb-5">
+            <h3 class="text-xl font-medium mb-4 text-center">请输入访问密码</h3>
+            <div class="mb-4">
+                <input type="password" id="passwordInput" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary" placeholder="请输入密码">
+                <p id="passwordError" class="text-red-500 mt-2 text-sm hidden">密码不正确，请重试</p>
             </div>
-            
-            <div id="fileList" class="mb-5"></div>
-            
-            <div id="status" class="p-4 rounded-md mb-5 hidden"></div>
-            
-            <button id="convertButton" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>开始转换</button>
+            <button id="loginButton" class="w-full bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">登录</button>
         </div>
         
-        <div id="resultContainer" class="bg-white rounded-lg shadow-md p-6 mb-5 hidden">
-            <div class="flex border-b border-gray-300 mb-4">
-                <div class="tab px-5 py-2 cursor-pointer border-b-2 border-primary font-medium active" data-tab="markdown">Markdown</div>
-                <div class="tab px-5 py-2 cursor-pointer border-b-2 border-transparent" data-tab="json">原始 JSON</div>
+        <!-- 主应用内容 -->
+        <div id="appContent" class="hidden">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-5">
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 rounded-md p-10 text-center cursor-pointer transition-all hover:border-primary hover:bg-primary/5 mb-5">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-16 h-16 fill-primary mx-auto mb-4">
+                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/>
+                    </svg>
+                    <h3 class="text-xl font-medium mb-2">上传文件</h3>
+                    <p class="text-gray-600 mb-4">点击上传或拖拽文件到这里</p>
+                    <button id="selectFiles" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">选择文件</button>
+                    <input type="file" id="fileInput" multiple class="hidden">
+                </div>
+                
+                <div id="fileList" class="mb-5"></div>
+                
+                <div id="status" class="p-4 rounded-md mb-5 hidden"></div>
+                
+                <button id="convertButton" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>开始转换</button>
             </div>
             
-            <div id="markdownResult" class="p-4 whitespace-pre-wrap max-h-[500px] overflow-y-auto bg-gray-50 rounded-md border border-gray-300 font-mono text-sm"></div>
-            <div id="jsonResult" class="p-4 whitespace-pre-wrap max-h-[500px] overflow-y-auto bg-gray-50 rounded-md border border-gray-300 font-mono text-sm hidden"></div>
-            
-            <div class="flex justify-end gap-2 mt-4">
-                <button id="copyButton" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">复制 Markdown</button>
-                <button id="downloadButton" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">下载 Markdown</button>
+            <div id="resultContainer" class="bg-white rounded-lg shadow-md p-6 mb-5 hidden">
+                <div class="flex border-b border-gray-300 mb-4">
+                    <div class="tab px-5 py-2 cursor-pointer border-b-2 border-primary font-medium active" data-tab="markdown">Markdown</div>
+                    <div class="tab px-5 py-2 cursor-pointer border-b-2 border-transparent" data-tab="json">原始 JSON</div>
+                </div>
+                
+                <div id="markdownResult" class="p-4 whitespace-pre-wrap max-h-[500px] overflow-y-auto bg-gray-50 rounded-md border border-gray-300 font-mono text-sm"></div>
+                <div id="jsonResult" class="p-4 whitespace-pre-wrap max-h-[500px] overflow-y-auto bg-gray-50 rounded-md border border-gray-300 font-mono text-sm hidden"></div>
+                
+                <div class="flex justify-end gap-2 mt-4">
+                    <button id="copyButton" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">复制 Markdown</button>
+                    <button id="downloadButton" class="bg-primary text-white px-5 py-2 rounded-md font-medium hover:bg-primary-hover transition-colors">下载 Markdown</button>
+                </div>
             </div>
-        </div>
-        
-        <div class="bg-white rounded-lg shadow-md p-6 mb-5">
-            <h3 class="text-lg font-medium mb-3">支持的格式</h3>
-            <ul class="flex flex-wrap gap-2">
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">PDF 文档 (.pdf)</li>
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">图片 (.jpg, .jpeg, .png, .webp, .svg)</li>
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">HTML 文档 (.html)</li>
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">XML 文档 (.xml)</li>
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">Office 文档 (.xlsx, .xlsm, .xls)</li>
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">OpenDocument (.ods)</li>
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">CSV 文件 (.csv)</li>
-                <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">Apple 文档 (.numbers)</li>
-            </ul>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-5">
+                <h3 class="text-lg font-medium mb-3">支持的格式</h3>
+                <ul class="flex flex-wrap gap-2">
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">PDF 文档 (.pdf)</li>
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">图片 (.jpg, .jpeg, .png, .webp, .svg)</li>
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">HTML 文档 (.html)</li>
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">XML 文档 (.xml)</li>
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">Office 文档 (.xlsx, .xlsm, .xls)</li>
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">OpenDocument (.ods)</li>
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">CSV 文件 (.csv)</li>
+                    <li class="bg-gray-100 px-3 py-1 rounded-full text-sm">Apple 文档 (.numbers)</li>
+                </ul>
+            </div>
         </div>
         
         <footer class="text-center text-gray-600 text-sm mt-10">
@@ -193,6 +270,12 @@ const HTML_CONTENT = `<!DOCTYPE html>
     
     <script>
         // 获取DOM元素
+        const loginForm = document.getElementById('loginForm');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordError = document.getElementById('passwordError');
+        const loginButton = document.getElementById('loginButton');
+        const appContent = document.getElementById('appContent');
+        
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const selectFiles = document.getElementById('selectFiles');
@@ -205,6 +288,68 @@ const HTML_CONTENT = `<!DOCTYPE html>
         const copyButton = document.getElementById('copyButton');
         const downloadButton = document.getElementById('downloadButton');
         const tabs = document.querySelectorAll('.tab');
+        
+        // 存储会话令牌
+        let sessionToken = localStorage.getItem('sessionToken');
+        
+        // 如果有会话令牌，尝试自动登录
+        if (sessionToken) {
+            loginForm.classList.add('hidden');
+            appContent.classList.remove('hidden');
+        }
+        
+        // 登录相关事件
+        loginButton.addEventListener('click', async () => {
+            const password = passwordInput.value.trim();
+            
+            if (!password) {
+                passwordError.textContent = '请输入密码';
+                passwordError.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                loginButton.disabled = true;
+                loginButton.textContent = '登录中...';
+                
+                const response = await fetch('/verify-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 保存会话令牌
+                    sessionToken = data.token;
+                    localStorage.setItem('sessionToken', sessionToken);
+                    
+                    // 隐藏登录表单，显示应用内容
+                    loginForm.classList.add('hidden');
+                    appContent.classList.remove('hidden');
+                } else {
+                    passwordError.textContent = data.error || '密码错误';
+                    passwordError.classList.remove('hidden');
+                }
+            } catch (error) {
+                passwordError.textContent = '登录失败，请重试';
+                passwordError.classList.remove('hidden');
+                console.error('登录错误:', error);
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = '登录';
+            }
+        });
+        
+        // 按回车键登录
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                loginButton.click();
+            }
+        });
         
         // 存储选择的文件
         let selectedFiles = [];
@@ -324,6 +469,16 @@ const HTML_CONTENT = `<!DOCTYPE html>
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
+        // 检查会话是否过期的辅助函数
+        function handleSessionExpired() {
+            localStorage.removeItem('sessionToken');
+            sessionToken = null;
+            loginForm.classList.remove('hidden');
+            appContent.classList.add('hidden');
+            passwordError.textContent = '会话已过期，请重新登录';
+            passwordError.classList.remove('hidden');
+        }
+        
         // 转换文件
         async function convertFiles() {
             if (selectedFiles.length === 0) return;
@@ -342,11 +497,20 @@ const HTML_CONTENT = `<!DOCTYPE html>
                     formData.append('files', file);
                 });
                 
-                // 发送请求
-                const response = await fetch('/convert', {
+                // 发送请求，包含认证令牌
+                const response = await fetch('/convert?token=' + sessionToken, {
                     method: 'POST',
+                    headers: {
+                        'X-Session-Token': sessionToken
+                    },
                     body: formData
                 });
+                
+                // 处理会话过期
+                if (response.status === 401) {
+                    handleSessionExpired();
+                    throw new Error('会话已过期，请重新登录');
+                }
                 
                 if (!response.ok) {
                     const errorData = await response.json();

@@ -4,3 +4,6 @@ compatibility_date = "2023-10-30"
 
 [ai]
 binding = "AI"
+
+[vars]
+APP_PASSWORD = "admin123"  # 默认密码，生产环境请修改为更复杂的密码

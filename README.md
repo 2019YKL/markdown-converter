@@ -6,9 +6,7 @@
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/markdown-converter)
 
-👉 **[演示站点: markdown.jkaihub.com](https://markdown.jkaihub.com)**
-
-高频、感兴趣的朋友可以试试自建
+刚需的朋友可以试试自己自建。
 
 ## 功能特点
 
@@ -19,6 +17,7 @@
 - 💾 **一键下载**：转换结果可直接下载或复制
 - 🔎 **JSON 查看**：提供原始 JSON 数据查看功能
 - 🔒 **速率限制**：内置防滥用保护机制，确保服务稳定可靠
+- 🔐 **密码保护**：通过密码验证机制控制访问权限
 
 ## 支持的文档格式
 
@@ -35,6 +34,36 @@
 
 ## 部署方法
 
+### 快速部署指南
+
+1. **登录 Cloudflare 控制台**
+   - 访问 [Cloudflare Dashboard](https://dash.cloudflare.com/) 并登录您的账户
+
+2. **创建新的 Worker**
+   - 在左侧导航栏中，点击 "Workers & Pages"
+   - 点击 "Create Application"
+   - 选择 "Create Worker"
+   - 输入 Worker 名称（如 "markdown-converter"）
+   - 点击 "Create Worker" 按钮
+
+3. **复制代码**
+   - 在 Worker 编辑界面中，删除默认的代码
+   - 复制并粘贴 `src/index.js` 中的代码到编辑器中
+
+4. **配置 AI 绑定和环境变量**
+   - 点击 "Settings" 选项卡，然后点击 "Variables"
+   - 在 "AI Bindings" 区域，点击 "Add binding"
+     - 名称输入 "AI"（必须大写）
+   - 在 "Environment Variables" 区域，点击 "Add variable"
+     - 名称输入 "APP_PASSWORD"
+     - 值输入您想设置的密码（例如：`your_secure_password`）
+   - 点击 "Save and Deploy"
+
+5. **测试您的应用**
+   - 部署成功后，访问 `https://[worker-name].[your-account].workers.dev`
+   - 输入您设置的密码进行登录
+   - 开始使用文档转换功能
+
 ### 方法一：一键部署（推荐）
 
 只需点击上方的 "Deploy to Cloudflare Workers" 按钮，按照提示操作即可快速部署：
@@ -45,49 +74,79 @@
 4. 点击 "Deploy" 按钮
 5. 等待部署完成，系统会自动为您配置 AI 绑定
 6. 部署完成后，点击生成的链接即可访问您的应用
+7. **重要**：部署后，记得设置 APP_PASSWORD 环境变量来启用密码保护
 
 > 注意：一键部署需要您授权 Cloudflare 访问 GitHub 仓库。
 
-### 方法二：手动部署
+### 方法二：使用 Wrangler 命令行工具
 
-如果您希望手动部署，请按照以下步骤操作：
+如果您偏好使用命令行工具：
 
-1. **登录 Cloudflare 控制台**
+1. **安装 Wrangler CLI**：
+```bash
+npm install -g wrangler
+```
 
-访问 [Cloudflare Dashboard](https://dash.cloudflare.com/) 并登录您的账户。
+2. **登录到 Cloudflare**：
+```bash
+wrangler login
+```
 
-2. **创建新的 Worker**
+3. **创建项目目录**：
+```bash
+mkdir markdown-converter
+cd markdown-converter
+```
 
-- 在左侧导航栏中，点击 "Workers & Pages"
-- 点击 "Create Application"
-- 选择 "Create Worker"
-- 输入 Worker 名称（如 "markdown-converter"）
-- 点击 "Create Worker" 按钮
+4. **创建 wrangler.toml 配置文件**：
+```toml
+name = "markdown-converter"
+main = "src/index.js"
+compatibility_date = "2023-10-30"
 
-3. **上传 index.js 文件**
+[ai]
+binding = "AI"
 
-- 在 Worker 编辑界面中，删除默认的代码
-- 上传或粘贴提供的 index.js 文件内容
+[vars]
+APP_PASSWORD = "your_secure_password"  # 设置访问密码
+```
 
-4. **配置 AI 绑定**
+5. **创建 src 目录并添加 index.js 文件**
+```bash
+mkdir src
+# 将 index.js 代码复制到该文件中
+```
 
-- 在 Worker 编辑界面的 "Settings" 选项卡中，点击 "Variables"
-- 在 "AI Bindings" 区域，点击 "Add binding"
-- 名称输入 "AI"（必须大写）
-- 点击 "Save and Deploy"
-
-5. **测试您的应用**
-
-部署成功后，您可以通过 `https://[worker-name].[your-account].workers.dev` 访问您的应用程序。
+6. **部署 Worker**：
+```bash
+wrangler deploy
+```
 
 ## 使用方法
 
 1. 访问应用 URL
-2. 点击"选择文件"按钮或直接拖拽文件到上传区域
-3. 选择一个或多个支持的文档文件
-4. 点击"开始转换"按钮
-5. 等待转换完成，查看生成的 Markdown 内容
-6. 可以选择复制 Markdown 文本或下载为 .md 文件
+2. 输入访问密码登录
+3. 点击"选择文件"按钮或直接拖拽文件到上传区域
+4. 选择一个或多个支持的文档文件
+5. 点击"开始转换"按钮
+6. 等待转换完成，查看生成的 Markdown 内容
+7. 可以选择复制 Markdown 文本或下载为 .md 文件
+
+## 密码保护功能
+
+为了防止服务被滥用并控制成本，应用集成了密码保护功能：
+
+- 访问应用时需要输入正确的密码才能使用转换功能
+- 密码通过 Cloudflare 环境变量 `APP_PASSWORD` 进行设置
+- 登录成功后会创建一个有效期为24小时的会话令牌
+- 会话过期后需要重新登录
+
+修改密码：
+1. 在 Cloudflare Dashboard 中，进入 Workers 部分
+2. 选择您的 Worker 应用
+3. 点击 "Settings" 选项卡，然后点击 "Variables"
+4. 在 "Environment Variables" 中修改 `APP_PASSWORD` 的值
+5. 点击 "Save and Deploy"
 
 ## 自定义速率限制 (防滥用)
 
@@ -134,12 +193,14 @@ wrangler deploy
 - 文件大小限制：根据 Cloudflare Workers 限制，请确保上传文件不超过 100MB
 - 转换质量：不同类型文件的转换质量可能有所差异
 - 速率限制：默认配置下每个IP地址每小时限制10次请求，可通过修改代码调整次数
+- 密码保护：请使用复杂密码以提高安全性，并定期更换密码
 
 ## 免费使用限制
 
 - 默认情况下，Cloudflare Workers AI 提供每天 100,000 次免费调用
 - 图像转换会使用两个 AI 模型，可能消耗更多额度
 - 超出免费额度后，将按照 Cloudflare 的定价计费（每 1000 次请求 $0.0005）
+- 使用密码保护功能可以有效控制使用量，避免额度被过快消耗
 
 ## 许可证
 
