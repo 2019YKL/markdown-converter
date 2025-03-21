@@ -6,16 +6,16 @@
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/markdown-converter)
 
-👉 **[官方演示站点: markdown.jkaihub.com](https://markdown.jkaihub.com)**
+👉 **[演示站点: markdown.jkaihub.com](https://markdown.jkaihub.com)**
+
+高频、感兴趣的朋友可以试试自建
 
 ## 功能特点
 
 - 🚀 **多格式支持**：支持 PDF、图像、Office 文档、HTML 等多种格式的文档转换
 - 💡 **智能转换**：使用 Cloudflare Workers AI 进行智能识别和处理
-- 🌐 **边缘计算**：基于 Cloudflare Workers 的全球边缘网络，具有低延迟特性
 - 🖼️ **图像识别**：可以智能分析图像内容并生成相应的 Markdown 描述
 - 📊 **美观界面**：简洁直观的用户界面，支持拖放上传
-- 📱 **响应式设计**：适配各种设备屏幕大小
 - 💾 **一键下载**：转换结果可直接下载或复制
 - 🔎 **JSON 查看**：提供原始 JSON 数据查看功能
 - 🔒 **速率限制**：内置防滥用保护机制，确保服务稳定可靠
