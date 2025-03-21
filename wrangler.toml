@@ -1,0 +1,6 @@
+name = "markdown-converter"
+main = "src/index.js"
+compatibility_date = "2023-10-30"
+
+[ai]
+binding = "AI"

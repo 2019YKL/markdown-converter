@@ -1,0 +1,28 @@
+{
+  "name": "markdown-converter",
+  "version": "1.0.0",
+  "description": "基于 Cloudflare Workers AI 构建的文档转换工具",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YOUR_USERNAME/markdown-converter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/markdown-converter/issues"
+  },
+  "homepage": "https://github.com/YOUR_USERNAME/markdown-converter#readme",
+  "private": false
+} 
