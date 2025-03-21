@@ -2,6 +2,8 @@
 
 基于 Cloudflare Workers AI 构建的文档转换工具，能够将各种格式的文档高效转换为 Markdown 格式。
 
+⬇️ 这里一键部署
+
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/YOUR_USERNAME/markdown-converter)
 
 👉 **[官方演示站点: markdown.jkaihub.com](https://markdown.jkaihub.com)**
@@ -131,8 +133,7 @@ wrangler deploy
 
 - 文件大小限制：根据 Cloudflare Workers 限制，请确保上传文件不超过 100MB
 - 转换质量：不同类型文件的转换质量可能有所差异
-- 图像转换：图像转换使用 AI 视觉模型生成描述，需要额外的计算资源
-- 速率限制：默认配置下每个IP地址每小时限制10次请求，可通过修改代码调整
+- 速率限制：默认配置下每个IP地址每小时限制10次请求，可通过修改代码调整次数
 
 ## 免费使用限制
 
