@@ -1,8 +1,49 @@
 // worker.js - Markdown 转换工具
+
+// 速率限制配置
+const RATE_LIMIT = {
+  maxRequests: 10,         // 每个IP每小时最多请求数
+  windowMs: 60 * 60 * 1000,  // 1小时时间窗口
+  ipCache: new Map()       // 存储IP及其请求次数
+};
+
 export default {
   async fetch(request, env) {
-    // 处理不同的请求路径
+    // 获取客户端IP
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+    const now = Date.now();
+    
+    // 实现速率限制
     const url = new URL(request.url);
+    if (url.pathname === '/convert') {
+      let clientData = RATE_LIMIT.ipCache.get(ip) || { count: 0, resetTime: now + RATE_LIMIT.windowMs };
+      
+      // 重置过期的计数器
+      if (now > clientData.resetTime) {
+        clientData = { count: 0, resetTime: now + RATE_LIMIT.windowMs };
+      }
+      
+      // 增加计数并检查限制
+      clientData.count++;
+      RATE_LIMIT.ipCache.set(ip, clientData);
+      
+      if (clientData.count > RATE_LIMIT.maxRequests) {
+        return new Response(JSON.stringify({ 
+          error: '请求频率过高，请稍后再试',
+          limit: RATE_LIMIT.maxRequests,
+          windowMs: RATE_LIMIT.windowMs,
+          remainingTime: clientData.resetTime - now
+        }), { 
+          status: 429,
+          headers: { 
+            'Content-Type': 'application/json',
+            'Retry-After': Math.ceil((clientData.resetTime - now) / 1000) 
+          }
+        });
+      }
+    }
+    
+    // 处理不同的请求路径
     
     // 首页 - 返回 HTML 界面
     if (url.pathname === '/' || url.pathname === '') {
