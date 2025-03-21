@@ -79,6 +79,7 @@
 5. 等待部署完成，系统会自动为您配置 AI 绑定
 6. 部署完成后，点击生成的链接即可访问您的应用
 7. **重要**：部署后，记得设置 APP_PASSWORD 环境变量来启用密码保护
+![CleanShot 2025-03-21 at 23 03 06@2x](https://github.com/user-attachments/assets/cb6d2ffb-6c1b-4573-9555-22656cb4f569)
 
 
 > 注意：一键部署需要您授权 Cloudflare 访问 GitHub 仓库。
