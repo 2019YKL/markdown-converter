@@ -79,6 +79,9 @@
 6. 部署完成后，点击生成的链接即可访问您的应用
 7. **重要**：部署后，记得设置 APP_PASSWORD 环境变量来启用密码保护
 
+![CleanShot 2025-03-21 at 23 03 09@2x](https://github.com/user-attachments/assets/92545a9c-749c-4c63-b5f0-577211688541)
+
+
 > 注意：一键部署需要您授权 Cloudflare 访问 GitHub 仓库。
 
 ### 方法二：使用 Wrangler 命令行工具
