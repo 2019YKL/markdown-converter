@@ -1,6 +1,6 @@
 # Markdown Document Converter
 
-English | [中文](README_CN.md)
+English | [中文](README_CN.md) | [日本語](README_JP.md)
 
 A document conversion tool built on Cloudflare Workers AI, capable of efficiently converting various document formats to Markdown.
 
@@ -88,8 +88,6 @@ Simply click the "Deploy to Cloudflare Workers" button above and follow the prom
 ### Method 2: Using the Wrangler CLI
 
 If you prefer using the command line:
-
-1. **Install Wrangler CLI**:
 ```bash
 npm install -g wrangler
 ```
