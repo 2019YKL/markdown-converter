@@ -1,6 +1,6 @@
 # Markdown ドキュメントコンバーター
 
-[English](README.md) | [中文](README_CN.md) | 日本語
+[🇬🇧 English](README.md) | [🇨🇳 中文](README_CN.md) | 🇯🇵 日本語
 
 Cloudflare Workers AI を利用した、様々な形式のドキュメントを効率的に Markdown に変換できるツールです。
 

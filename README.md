@@ -1,6 +1,6 @@
 # Markdown Document Converter
 
-English | [中文](README_CN.md) | [日本語](README_JP.md)
+🇬🇧 English | [🇨🇳 中文](README_CN.md) | [🇯🇵 日本語](README_JP.md)
 
 A document conversion tool built on Cloudflare Workers AI, capable of efficiently converting various document formats to Markdown.
 

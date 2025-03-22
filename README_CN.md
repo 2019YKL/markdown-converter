@@ -1,6 +1,6 @@
 # Markdown 文档转换工具
 
-[English](README.md) | 中文 | [日本語](README_JP.md)
+[🇬🇧 English](README.md) | 🇨🇳 中文 | [🇯🇵 日本語](README_JP.md)
 
 基于 Cloudflare Workers AI 构建的文档转换工具，能够将各种格式的文档高效转换为 Markdown 格式。
 
